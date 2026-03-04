@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TaskFlow — Task Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+    <!-- AUTH SCREEN -->
+    <div id="auth-screen" class="screen active">
+        <div class="auth-bg">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+            <div class="blob blob-3"></div>
+        </div>
+        <div class="auth-card glass">
+            <div class="auth-logo">
+                <span class="logo-icon">✦</span>
+                <span class="logo-text">TaskFlow</span>
+            </div>
+            <p class="auth-subtitle">Manage your life, beautifully.</p>
+
+            <div class="tab-group">
+                <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Login</button>
+                <button class="tab-btn" id="tab-register" onclick="switchTab('register')">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form" onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="login-email" placeholder="you@example.com" required />
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password" placeholder="Your password" required />
+                </div>
+                <button type="submit" class="btn btn-primary" id="login-btn">
+                    <span class="btn-text">Sign In</span>
+                    <span class="btn-loader hidden">⟳</span>
+                </button>
+                <p id="login-error" class="form-error hidden"></p>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" class="auth-form hidden" onsubmit="handleRegister(event)">
+                <div class="input-group">
+                    <label>Full Name</label>
+                    <input type="text" id="reg-name" placeholder="Your name" required />
+                </div>
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="reg-email" placeholder="you@example.com" required />
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="reg-password" placeholder="Min. 6 characters" required />
+                </div>
+                <button type="submit" class="btn btn-primary" id="register-btn">
+                    <span class="btn-text">Create Account</span>
+                    <span class="btn-loader hidden">⟳</span>
+                </button>
+                <p id="register-error" class="form-error hidden"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- DASHBOARD SCREEN -->
+    <div id="dashboard-screen" class="screen">
+
+        <!-- FLOATING PARTICLES -->
+        <canvas id="particles-canvas"></canvas>
+
+        <!-- 3D ORB BACKGROUND -->
+        <div class="orb-scene" aria-hidden="true">
+            <div class="orb">
+                <div class="ring r1"></div>
+                <div class="ring r2"></div>
+                <div class="ring r3"></div>
+                <div class="ring r4"></div>
+                <div class="ring r5"></div>
+                <div class="ring r6"></div>
+                <div class="dot-core"></div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar glass">
+            <div class="sidebar-logo">
+                <span class="logo-icon">✦</span>
+                <span class="logo-text">TaskFlow</span>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar" id="user-avatar">T</div>
+                <div>
+                    <div class="user-name" id="user-name">User</div>
+                    <div class="user-email" id="user-email">user@email.com</div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-stats">
+                    <div class="stat-card">
+                        <span class="stat-num" id="stat-total">0</span>
+                        <span class="stat-label">Total</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-num" id="stat-pending">0</span>
+                        <span class="stat-label">Pending</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-num" id="stat-done">0</span>
+                        <span class="stat-label">Done</span>
+                    </div>
+                </div>
+            </nav>
+            <button class="btn btn-logout" onclick="handleLogout()">Sign Out</button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="main-header">
+                <div>
+                    <h1 class="page-title">My Tasks</h1>
+                    <p class="page-subtitle" id="greeting">Good morning!</p>
+                </div>
+                <button class="btn btn-primary" onclick="openTaskModal()">+ New Task</button>
+            </header>
+
+            <!-- Filters & Search -->
+            <div class="toolbar glass">
+                <input type="text" id="search-input" class="search-box" placeholder="🔍  Search tasks..."
+                    oninput="debounceSearch()" />
+                <div class="filter-group">
+                    <select id="filter-status" onchange="loadTasks()">
+                        <option value="">All Status</option>
+                        <option value="Pending">Pending</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                    <select id="filter-sort" onchange="loadTasks()">
+                        <option value="">Newest First</option>
+                        <option value="dueDate">Due Date ↑</option>
+                        <option value="-dueDate">Due Date ↓</option>
+                        <option value="priority">Priority</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Task Grid -->
+            <div id="task-grid" class="task-grid"></div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="pagination"></div>
+        </main>
+    </div>
+
+    <!-- TASK MODAL -->
+    <div id="task-modal" class="modal-overlay hidden" onclick="closeModalOnOverlay(event)">
+        <div class="modal glass">
+            <div class="modal-header">
+                <h2 id="modal-title">New Task</h2>
+                <button class="modal-close" onclick="closeTaskModal()">✕</button>
+            </div>
+            <form id="task-form" onsubmit="handleTaskSubmit(event)">
+                <input type="hidden" id="task-id" />
+                <div class="form-grid">
+                    <div class="input-group full-width">
+                        <label>Title *</label>
+                        <input type="text" id="task-title" placeholder="What needs to be done?" required />
+                    </div>
+                    <div class="input-group full-width">
+                        <label>Description</label>
+                        <textarea id="task-desc" placeholder="Add some details..." rows="3"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label>Priority</label>
+                        <select id="task-priority">
+                            <option value="Low">🟢 Low</option>
+                            <option value="Medium" selected>🟡 Medium</option>
+                            <option value="High">🔴 High</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Status</label>
+                        <select id="task-status">
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="input-group full-width">
+                        <label>Due Date</label>
+                        <input type="date" id="task-due" />
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeTaskModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="task-submit-btn">Create Task</button>
+                </div>
+                <p id="task-error" class="form-error hidden"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- DELETE CONFIRM MODAL -->
+    <div id="delete-modal" class="modal-overlay hidden" onclick="closeDeleteOnOverlay(event)">
+        <div class="modal modal-sm glass">
+            <h2>Delete Task?</h2>
+            <p>This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- CELEBRATION OVERLAY -->
+    <div id="celebrate-overlay" class="celebrate-overlay hidden">
+        <canvas id="confetti-canvas"></canvas>
+        <div class="celebrate-msg">
+            <div class="celebrate-emoji">🎉</div>
+            <h2>Amazing Work!</h2>
+            <p>Task completed successfully!</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
